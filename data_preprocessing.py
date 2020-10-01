@@ -13,7 +13,7 @@ volume_til_dnp = X[:, 5]
 volume_totalt = X[:, 6]
 
 #plot datapoints per hour for both directions
-fig = plt.figure(figsize=(10,10))
+fig = plt.figure(1, figsize=(10,10))
 plt.ylim((0, 500))
 ylabels = np.arange(10)
 ylabels = ylabels * 50
@@ -22,7 +22,7 @@ plt.yticks(ylabels, ylabels)
 plt.scatter(fra_time,volume_til_sntr, label="Volume to centre")
 plt.scatter(fra_time_mod,volume_til_dnp, label="Volume to Danmarksplass")
 plt.legend()
-plt.show()
+#plt.show()
 
 #convert dates to date objects and sort into weekdays
 mon = []
@@ -65,7 +65,7 @@ for day in range(len(weekdays)):
     fra_time_mod_temp = np.array(fra_time_temp) + 0.4
     vol_til_sntr_temp = weekday_points_np[:, 1]
     vol_til_dnp_temp = weekday_points_np[:, 2]
-    plt.figure(1, figsize=(24, 15))
+    plt.figure(2, figsize=(16, 10))
     if day < len(weekdays) - 1:
         plot_idx = day+1
     else:
