@@ -2,6 +2,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.tree import DecisionTreeClassifier
 
 #read file to input
 df = pd.read_csv('data.csv', header = None)
@@ -78,3 +83,38 @@ for day in range(len(weekdays)):
     plt.legend()
 plt.suptitle("Volume in both directions for each weekday")
 plt.show()
+
+
+#Models
+
+#Linear Regression with polynomial basic function
+mse_train = []
+mse_val = []
+r2_train = []
+r2_val = []
+
+for k in range(6):
+    poly_model = make_pipeline(PolynomialFeatures(k),LinearRegression())
+    poly_model.fit(X_train, Y_train)
+
+    Y_train_pred_poly = poly_model.predict(X_train)
+    Y_val_pred_poly = model.predict(X_val)
+
+    mse_train.append(mean_squared_error(Y_train, Y_train_pred_poly))
+    r2_train.append(r2_score(Y_train, Y_train_pred_poly))
+    mse_val.append(mean_squared_error(Y_val, Y_val_pred_poly))
+    r2_val.append(r2_score(Y_val, Y_val_pred_poly))
+
+plt.figure(figsize=(10,10))
+plt.ylim(min(min(mse_train),min(mse_val)), min(max(max(mse_train), max(mse_val)), 300))
+plt.plot(x_axis, mse_train, label="Training")
+plt.plot(x_axis, mse_val, label="Validation")
+plt.legend()
+
+plt.figure(figsize=(10,10))
+plt.ylim(0,1)
+plt.plot(range(6), r2_train, label="Training")
+plt.plot(range(6), r2_val, label="Validation")
+plt.legend()
+
+#Linear Regression with gaussian basic function
