@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import datetime
+from mpl_toolkits.mplot3d import Axes3D
 from sklearn import model_selection
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
@@ -194,20 +194,20 @@ Y_totalt = np.array(Y_totalt_list)
 
 #Split Data
 seed = 523
-X_train, X_val_test, Y_train_sntr, Y_val_test_sntr, Y_train_dnp, Y_val_test_dnp, Y_train_total, Y_val_test_total = model_selection.train_test_split(X, Y_sntr, Y_dnp, Y_total, test_size= 0.2, shuffle=True, random_state = seed)
+X_train, X_val_test, Y_train_sntr, Y_val_test_sntr, Y_train_dnp, Y_val_test_dnp, Y_train_total, Y_val_test_total = model_selection.train_test_split(X, Y_sntr, Y_dnp, Y_totalt, test_size= 0.2, shuffle=True, random_state = seed)
 seed = 768
-X_val, X_test, Y_val_sentr, Y_test_sentr, Y_val_dnp, Y_test_dnp, Y_val_total, Y_test_total = model_selection.train_test_split(X_val_test, Y_val_test_sentr, Y_val_test_dnp, Y_val_test_total, test_size= 0.5, shuffle=True,
+X_val, X_test, Y_val_sntr, Y_test_sntr, Y_val_dnp, Y_test_dnp, Y_val_total, Y_test_total = model_selection.train_test_split(X_val_test, Y_val_test_sntr, Y_val_test_dnp, Y_val_test_total, test_size= 0.5, shuffle=True,
 random_state = seed)
 #Ratio = 0.8 , 0.1 , 0.1
 
 
 #Models
-different_predictions = [sntr, dnp, total]
+different_predictions = ["sentr", "dnp", "total"]
 for p in different_predictions:
-    if p == sentr:
-        Y_train = Y_train_sentr
-        Y_val = Y_val_sentr
-    elif p == dnp:
+    if p == "sntr":
+        Y_train = Y_train_sntr
+        Y_val = Y_val_sntr
+    elif p == "dnp":
         Y_train = Y_train_dnp
         Y_val = Y_val_dnp
     else:
@@ -225,7 +225,7 @@ for p in different_predictions:
         poly_model.fit(X_train, Y_train)
 
         Y_train_pred = poly_model.predict(X_train)
-        Y_val_pred = model.predict(X_val)
+        Y_val_pred = poly_model.predict(X_val)
 
         mse_train.append(mean_squared_error(Y_train, Y_train_pred))
         r2_train.append(r2_score(Y_train, Y_train_pred))
@@ -234,8 +234,8 @@ for p in different_predictions:
 
     plt.figure(figsize=(10,10))
     plt.ylim(min(min(mse_train),min(mse_val)), min(max(max(mse_train), max(mse_val)), 300))
-    plt.plot(x_axis, mse_train, label="Training")
-    plt.plot(x_axis, mse_val, label="Validation")
+    plt.plot(range(6), mse_train, label="Training")
+    plt.plot(range(6), mse_val, label="Validation")
     plt.title(label= p + ": mse: Linear Regression with polynomial basic function of degree "+str(k))
     plt.legend()
 
@@ -264,7 +264,7 @@ for p in different_predictions:
             for alpha in alphalist:
 
                 mlp_reg = MLPRegressor(hidden_layer_sizes=(hiddenlayers,), learning_rate ="constant",
-                learning_rate_init = learningrate, alpha = alpha)
+                learning_rate_init = learning_rate, alpha = alpha)
 
                 mlp_reg.fit(X_train, Y_train)
                 Y_train_pred = mlp_reg.predict(X_train)
@@ -278,7 +278,7 @@ for p in different_predictions:
                 j+=1
             i+=1
 
-        learning_mesh, alpha_mesh = np.meshgrid(learningratelist, alpharatelist)
+        learning_mesh, alpha_mesh = np.meshgrid(learningratelist, alphalist)
         mse_train_mesh = np.meshgrid(mse_train)
         mse_val_mesh =np.meshgrid(mse_val)
         fig = plt.figure()
@@ -317,8 +317,8 @@ for p in different_predictions:
 
     plt.figure(figsize=(10,10))
     plt.ylim(min(min(mse_train),min(mse_val)), min(max(max(mse_train), max(mse_val)), 300))
-    plt.plot(x_axis, mse_train, label="Training")
-    plt.plot(x_axis, mse_val, label="Validation")
+    plt.plot(range(1,10), mse_train, label="Training")
+    plt.plot(range(1,10), mse_val, label="Validation")
     plt.title(label= p + ": mse: knn with "+str(k)+" neighbors")
     plt.legend()
 
