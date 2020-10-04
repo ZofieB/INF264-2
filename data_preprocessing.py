@@ -158,8 +158,6 @@ ax.plot_wireframe(learning_mesh, alpha_mesh, mse_val_mesh, color = "black")
 ax.set_title("MSE")
 
 #Using 100 hidden layers
-alphalist = [0.001, 0.01, 0.1]
-learningratelist = [0.001, 0.01, 0.1]
 mse_train = np.ones(len(learningratelist),len(alphalist))
 mse_val = np.ones(len(learningratelist),len(alphalist))
 r2_train = np.ones(len(learningratelist),len(alphalist))
