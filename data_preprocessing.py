@@ -24,29 +24,10 @@ plt.scatter(fra_time_mod,volume_til_dnp, label="Volume to Danmarksplass")
 plt.legend()
 #plt.show()
 
-#convert dates to date objects and sort into weekdays
-mon = []
-tue = []
-wed = []
-thu = []
-fri = []
-sat = []
-sun = []
-weekdays = [mon, tue, wed, thu, fri, sat, sun]
+#convert dates to date objects and sort into weekdays/ months
 dates = []
-jan = []
-feb = []
-mar = []
-apr = []
-mai = []
-jun = []
-jul = []
-aug = []
-sep = []
-octo = []
-nov = []
-dec = []
-months = [jan, feb, mar, apr, mai, jun, jul, aug, sep, octo, nov, dec]
+weekdays = [[], [], [], [], [], [], []]
+months = [[], [], [], [], [], [], [], [], [], [], [], []]
 for datapoint in X_raw:
     datetime_point = datetime.datetime(datapoint[0], datapoint[1], datapoint[2], hour = datapoint[3])
     new_datapoint = [datetime_point, datapoint[4], datapoint[5], datapoint[6]]
@@ -56,7 +37,6 @@ for datapoint in X_raw:
     months[datetime_point.month - 1].append(new_datapoint)
 
 #plot every weekday seperately
-# Display scatterplots of target prices with respect to each of the 13 features:
 colors = ['cornflowerblue',
           'tab:orange',
           'tab:green',
@@ -92,6 +72,8 @@ for day in range(len(weekdays)):
     plt.legend()
 plt.suptitle("Volume in both directions for each weekday")
 
+
+#plot every month seperately
 month_strings = ["January", "Feburary", "March", "April", "Mai", "June", "July", "August", "September", "October", "November", "December"]
 
 for month in range(len(months)):
