@@ -95,7 +95,7 @@ for day in range(len(weekdays)):
     plt.subplot(4, 2, plot_idX_raw)
     plt.scatter(fra_time_temp,vol_til_sntr_temp, label="Volume to centre", c = colors[day])
     plt.scatter(fra_time_mod_temp,vol_til_dnp_temp, label="Volume to Danmarksplass", c = colors[day + 7])
-    plt.X_rawlabel(weekday_strings[day])
+    plt.xlabel(weekday_strings[day])
     plt.ylabel('Volume')
     plt.legend()
 plt.suptitle("Volume in both directions for each weekday")
@@ -117,7 +117,7 @@ for month in range(len(months)):
     plt.subplot(3, 4, plot_idX_raw)
     plt.scatter(fra_time_temp,vol_til_sntr_temp, label="Volume to centre", c = colors[0])
     plt.scatter(fra_time_mod_temp,vol_til_dnp_temp, label="Volume to Danmarksplass", c = colors[1])
-    plt.X_rawlabel(month_strings[month])
+    plt.xlabel(month_strings[month])
     plt.ylabel('Volume')
     plt.legend()
 plt.suptitle("Volume in both directions for each month")
@@ -220,7 +220,7 @@ for p in different_predictions:
     r2_train = []
     r2_val = []
 
-    for k in range(6):
+    for k in range(1,6):
         poly_model = make_pipeline(PolynomialFeatures(k),LinearRegression())
         poly_model.fit(X_train, Y_train)
 
@@ -233,34 +233,37 @@ for p in different_predictions:
         r2_val.append(r2_score(Y_val, Y_val_pred))
 
     plt.figure(figsize=(10,10))
-    plt.ylim(min(min(mse_train),min(mse_val)), min(max(max(mse_train), max(mse_val)), 300))
-    plt.plot(range(6), mse_train, label="Training")
-    plt.plot(range(6), mse_val, label="Validation")
-    plt.title(label= p + ": mse: Linear Regression with polynomial basic function of degree "+str(k))
+    plt.ylim(min(min(mse_train),min(mse_val)), min(max(max(mse_train), max(mse_val)),28000))
+    plt.plot(range(1,6), mse_train, label="Training")
+    plt.plot(range(1,6), mse_val, label="Validation")
+    plt.title(label= p + ": mse: Linear Regression with polynomial basic function of degrees 1-5 ")
     plt.legend()
 
     plt.figure(figsize=(10,10))
     plt.ylim(0,1)
-    plt.plot(range(6), r2_train, label="Training")
-    plt.plot(range(6), r2_val, label="Validation")
-    plt.title(label= p + ": r2_score: Linear Regression with polynomial basic function of degree "+str(k))
+    plt.plot(range(1,6), r2_train, label="Training")
+    plt.plot(range(1,6), r2_val, label="Validation")
+    plt.title(label= p + ": r2_score: Linear Regression with polynomial basic function of degrees 1-5 ")
     plt.legend()
+    plt.show()
 
 
-
-
+    
     #MLP-Regressor
     #Testing for different values of hiddenlayers, alpha, learningrate
     #Honestly dont really know what are realistic values
     alphalist = [0.001, 0.01, 0.1]
-    learningratelist = [0.001, 0.01, 0.1]
-    mse_train = np.ones(len(learningratelist),len(alphalist))
-    mse_val = np.ones(len(learningratelist),len(alphalist))
-    r2_train = np.ones(len(learningratelist),len(alphalist))
-    r2_val = np.ones(len(learningratelist),len(alphalist))
-    i,j = 0
+    learningratelist = [0.01, 0.1, 0.2]
+    #with learningrate 0.001 doesnt converge in 200 iterations
+    mse_train = np.ones((len(learningratelist),len(alphalist)))
+    mse_val = np.ones((len(learningratelist),len(alphalist)))
+    r2_train = np.ones((len(learningratelist),len(alphalist)))
+    r2_val = np.ones((len(learningratelist),len(alphalist)))
+    j = 0
     for hiddenlayers in [10,100]:
+        i=0
         for learning_rate in learningratelist:
+            j=0
             for alpha in alphalist:
 
                 mlp_reg = MLPRegressor(hidden_layer_sizes=(hiddenlayers,), learning_rate ="constant",
@@ -278,22 +281,23 @@ for p in different_predictions:
                 j+=1
             i+=1
 
-        learning_mesh, alpha_mesh = np.meshgrid(learningratelist, alphalist)
-        mse_train_mesh = np.meshgrid(mse_train)
-        mse_val_mesh =np.meshgrid(mse_val)
+        print("MSE_train: "+str(mse_train))
         fig = plt.figure()
         ax = plt.axes(projection="3d")
-        ax.plot_wireframe(learning_mesh,alpha_mesh, mse_train_mesh, color = "red")
-        ax.plot_wireframe(learning_mesh, alpha_mesh, mse_val_mesh, color = "black")
+        ax.plot_wireframe(learningratelist,alphalist, mse_train, color = "red", label="mse_train")
+        ax.plot_wireframe(learningratelist, alphalist, mse_val, color = "black", label="mse_val")
         ax.set_title(p+": MSE: MLP using "+str(hiddenlayers)+ " hidden layers")
+        plt.legend()
+        plt.show()
 
-        r2_train_mesh = np.meshgrid(r2_train)
-        r2_val_mesh =np.meshgrid(r2_val)
+        
         fig = plt.figure()
         ax = plt.axes(projection="3d")
-        ax.plot_wireframe(learning_mesh,alpha_mesh, r2_train_mesh, color = "red")
-        ax.plot_wireframe(learning_mesh, alpha_mesh, r2_val_mesh, color = "black")
+        ax.plot_wireframe(learningratelist,alphalist, r2_train, color = "red", label="r2_train")
+        ax.plot_wireframe(learningratelist, alphalist, r2_val, color = "black", label="r2_val")
         ax.set_title(p+": r2_score: MLP using "+str(hiddenlayers)+ " hidden layers")
+        plt.legend()
+        plt.show()
 
 
 
@@ -306,9 +310,9 @@ for p in different_predictions:
 
     for k in range(1,10):
         knn = KNeighborsRegressor(n_neighbors = k, p=2)
-        knn.fit()
-        Y_train_pred = knn.predict(Y_train)
-        Y_val_pred = knn.predict(Y_val)
+        knn.fit(X_train, Y_train)
+        Y_train_pred = knn.predict(X_train)
+        Y_val_pred = knn.predict(X_val)
 
         mse_train.append(mean_squared_error(Y_train, Y_train_pred))
         mse_val.append(mean_squared_error(Y_val, Y_val_pred))
@@ -316,7 +320,7 @@ for p in different_predictions:
         r2_val.append(r2_score(Y_val, Y_val_pred))
 
     plt.figure(figsize=(10,10))
-    plt.ylim(min(min(mse_train),min(mse_val)), min(max(max(mse_train), max(mse_val)), 300))
+    plt.ylim(min(min(mse_train),min(mse_val)), min(max(max(mse_train), max(mse_val)), 35000))
     plt.plot(range(1,10), mse_train, label="Training")
     plt.plot(range(1,10), mse_val, label="Validation")
     plt.title(label= p + ": mse: knn with "+str(k)+" neighbors")
@@ -324,7 +328,8 @@ for p in different_predictions:
 
     plt.figure(figsize=(10,10))
     plt.ylim(0,1)
-    plt.plot(range(6), r2_train, label="Training")
-    plt.plot(range(6), r2_val, label="Validation")
+    plt.plot(range(1,10), r2_train, label="Training")
+    plt.plot(range(1,10), r2_val, label="Validation")
     plt.title(label= p + ": r2_score: knn with "+str(k)+" neighbors")
     plt.legend()
+    plt.show()
