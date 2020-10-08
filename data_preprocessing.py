@@ -193,12 +193,20 @@ Y_dnp = np.array(Y_dnp_list)
 Y_totalt = np.array(Y_totalt_list)
 
 #Split Data
-seed = 523
+seed = 221
 X_train, X_val_test, Y_train_sntr, Y_val_test_sntr, Y_train_dnp, Y_val_test_dnp, Y_train_total, Y_val_test_total = model_selection.train_test_split(X, Y_sntr, Y_dnp, Y_totalt, test_size= 0.2, shuffle=True, random_state = seed)
 seed = 768
 X_val, X_test, Y_val_sntr, Y_test_sntr, Y_val_dnp, Y_test_dnp, Y_val_total, Y_test_total = model_selection.train_test_split(X_val_test, Y_val_test_sntr, Y_val_test_dnp, Y_val_test_total, test_size= 0.5, shuffle=True,
 random_state = seed)
 #Ratio = 0.8 , 0.1 , 0.1
+
+#checkfunction:
+def check_stupid_prediction(Y):
+    count = 0
+    for i in range(len(Y)):
+        if Y[i] < 0:
+            count += 1
+    return count
 
 
 #Models
@@ -220,35 +228,41 @@ for p in different_predictions:
     r2_train = []
     r2_val = []
 
-    for k in range(1,6):
+    klist = range(1,15)
+
+    for k in klist:
         poly_model = make_pipeline(PolynomialFeatures(k),LinearRegression())
         poly_model.fit(X_train, Y_train)
 
         Y_train_pred = poly_model.predict(X_train)
         Y_val_pred = poly_model.predict(X_val)
 
+        print(p+": polymodel degree "+ str(k)+ ": stupid predictions on X_train: "+ str(check_stupid_prediction(Y_train_pred)))
+        print(p+": polymodel degree "+ str(k)+ ": stupid predictions on X_val: "+str(check_stupid_prediction(Y_val_pred)))
+
         mse_train.append(mean_squared_error(Y_train, Y_train_pred))
         r2_train.append(r2_score(Y_train, Y_train_pred))
         mse_val.append(mean_squared_error(Y_val, Y_val_pred))
         r2_val.append(r2_score(Y_val, Y_val_pred))
 
+    print(p +":poly_model: MSE_Val: " + str(mse_val))
+
     plt.figure(figsize=(10,10))
     plt.ylim(min(min(mse_train),min(mse_val)), min(max(max(mse_train), max(mse_val)),28000))
-    plt.plot(range(1,6), mse_train, label="Training")
-    plt.plot(range(1,6), mse_val, label="Validation")
+    plt.plot(klist, mse_train, label="Training")
+    plt.plot(klist, mse_val, label="Validation")
     plt.title(label= p + ": mse: Linear Regression with polynomial basic function of degrees k")
     plt.xlabel("k")
     plt.legend()
 
     plt.figure(figsize=(10,10))
     plt.ylim(0,1)
-    plt.plot(range(1,6), r2_train, label="Training")
-    plt.plot(range(1,6), r2_val, label="Validation")
+    plt.plot(klist, r2_train, label="Training")
+    plt.plot(klist, r2_val, label="Validation")
     plt.title(label= p + ": r2_score: Linear Regression with polynomial basic function of degrees k")
     plt.xlabel("k")
     plt.legend()
     plt.show()
-
 
     
     #MLP-Regressor
@@ -275,6 +289,9 @@ for p in different_predictions:
                 Y_train_pred = mlp_reg.predict(X_train)
                 Y_val_pred = mlp_reg.predict(X_val)
 
+                print(p+"MLP with "+str(hiddenlayers)+" hidden layers: stupid predictions on X_train: "+str(check_stupid_prediction(Y_train_pred)))
+                print(p+"MLP with "+str(hiddenlayers)+" hidden layers:stupid predictions on X_val: "+str(check_stupid_prediction(Y_val_pred)))
+
                 mse_train[i][j]=mean_squared_error(Y_train_pred, Y_train)
                 mse_val[i][j]=mean_squared_error(Y_val_pred, Y_val)
                 r2_train[i][j]=r2_score(Y_train_pred, Y_train)
@@ -283,7 +300,7 @@ for p in different_predictions:
                 j+=1
             i+=1
 
-        print("MSE_train: "+str(mse_train))
+        print(p +": MLP: hiddenlayers: "+ str(hiddenlayers) + ": MSE_Val: " + str(mse_val))
         fig = plt.figure()
         learningmesh, alphamesh = np.meshgrid(learningratelist, alphalist)
         ax = plt.axes(projection="3d")
@@ -315,29 +332,36 @@ for p in different_predictions:
     r2_train = []
     r2_val = []
 
-    for k in range(1,10):
+
+    for k in klist:
         knn = KNeighborsRegressor(n_neighbors = k, p=2)
         knn.fit(X_train, Y_train)
         Y_train_pred = knn.predict(X_train)
         Y_val_pred = knn.predict(X_val)
+
+        print(p+": knn degree "+ str(k)+ ": stupid predictions on X_train: "+str(check_stupid_prediction(Y_train_pred)))
+        print(p+": knn degree "+ str(k)+ ": stupid predictions on X_val: "+str(check_stupid_prediction(Y_val_pred)))
+
 
         mse_train.append(mean_squared_error(Y_train, Y_train_pred))
         mse_val.append(mean_squared_error(Y_val, Y_val_pred))
         r2_train.append(r2_score(Y_train, Y_train_pred))
         r2_val.append(r2_score(Y_val, Y_val_pred))
 
+    print(p +": knn: MSE_Val: " + str(mse_val))
+
     plt.figure(figsize=(10,10))
     plt.ylim(min(min(mse_train),min(mse_val)), min(max(max(mse_train), max(mse_val)), 35000))
-    plt.plot(range(1,10), mse_train, label="Training")
-    plt.plot(range(1,10), mse_val, label="Validation")
+    plt.plot(klist, mse_train, label="Training")
+    plt.plot(klist, mse_val, label="Validation")
     plt.title(label= p + ": mse: knn with k neighbors")
     plt.xlabel("k")
     plt.legend()
 
     plt.figure(figsize=(10,10))
     plt.ylim(0,1)
-    plt.plot(range(1,10), r2_train, label="Training")
-    plt.plot(range(1,10), r2_val, label="Validation")
+    plt.plot(klist, r2_train, label="Training")
+    plt.plot(klist, r2_val, label="Validation")
     plt.title(label= p + ": r2_score: knn with k neighbors")
     plt.xlabel("k")
     plt.legend()
