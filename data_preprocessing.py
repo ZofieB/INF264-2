@@ -2,6 +2,14 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
+from mpl_toolkits.mplot3d import Axes3D
+from sklearn import model_selection
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.neural_network import MLPRegressor
+from sklearn.neighbors import KNeighborsRegressor
 
 #read file to input
 df = pd.read_csv('data.csv', header = None)
@@ -71,7 +79,6 @@ for day in range(len(weekdays)):
     plt.ylabel('Volume')
     plt.legend()
 plt.suptitle("Volume in both directions for each weekday")
-
 
 #plot every month seperately
 month_strings = ["January", "Feburary", "March", "April", "Mai", "June", "July", "August", "September", "October", "November", "December"]
@@ -165,3 +172,214 @@ X = np.array(fe_datapoints)
 Y_sntr = np.array(Y_sntr_list)
 Y_dnp = np.array(Y_dnp_list)
 Y_totalt = np.array(Y_totalt_list)
+
+#Split Data
+seed = 119
+X_train, X_val_test, Y_train_sntr, Y_val_test_sntr, Y_train_dnp, Y_val_test_dnp, Y_train_total, Y_val_test_total = model_selection.train_test_split(X, Y_sntr, Y_dnp, Y_totalt, test_size= 0.2, shuffle=True, random_state = seed)
+seed = 632
+X_val, X_test, Y_val_sntr, Y_test_sntr, Y_val_dnp, Y_test_dnp, Y_val_total, Y_test_total = model_selection.train_test_split(X_val_test, Y_val_test_sntr, Y_val_test_dnp, Y_val_test_total, test_size= 0.5, shuffle=True,
+random_state = seed)
+#Ratio = 0.8 , 0.1 , 0.1
+
+#checkfunction:
+def check_stupid_prediction(Y):
+    count = 0
+    for i in range(len(Y)):
+        if Y[i] < 0:
+            count += 1
+    return count
+
+
+#Models
+different_predictions = ["sentr", "dnp", "total"]
+for p in different_predictions:
+    if p == "sntr":
+        Y_train = Y_train_sntr
+        Y_val = Y_val_sntr
+    elif p == "dnp":
+        Y_train = Y_train_dnp
+        Y_val = Y_val_dnp
+    else:
+        Y_train = Y_train_total
+        Y_val = Y_val_total
+    
+    #Linear Regression with polynomial basic function
+    mse_train = []
+    mse_val = []
+    r2_train = []
+    r2_val = []
+
+    klist = range(1,15)
+
+    for k in klist:
+        poly_model = make_pipeline(PolynomialFeatures(k),LinearRegression())
+        poly_model.fit(X_train, Y_train)
+
+        Y_train_pred = poly_model.predict(X_train)
+        Y_val_pred = poly_model.predict(X_val)
+
+        print(p+": polymodel degree "+ str(k)+ ": stupid predictions on X_train: "+ str(check_stupid_prediction(Y_train_pred)))
+        print(p+": polymodel degree "+ str(k)+ ": stupid predictions on X_val: "+str(check_stupid_prediction(Y_val_pred)))
+
+        mse_train.append(mean_squared_error(Y_train, Y_train_pred))
+        r2_train.append(r2_score(Y_train, Y_train_pred))
+        mse_val.append(mean_squared_error(Y_val, Y_val_pred))
+        r2_val.append(r2_score(Y_val, Y_val_pred))
+
+    print(p +":poly_model: MSE_Val: " + str(mse_val))
+
+    plt.figure(figsize=(10,10))
+    plt.ylim(min(min(mse_train),min(mse_val)), min(max(max(mse_train), max(mse_val)),28000))
+    plt.plot(klist, mse_train, label="Training")
+    plt.plot(klist, mse_val, label="Validation")
+    plt.title(label= p + ": mse: Linear Regression with polynomial basic function of degrees k")
+    plt.xlabel("k")
+    plt.legend()
+
+    plt.figure(figsize=(10,10))
+    plt.ylim(0,1)
+    plt.plot(klist, r2_train, label="Training")
+    plt.plot(klist, r2_val, label="Validation")
+    plt.title(label= p + ": r2_score: Linear Regression with polynomial basic function of degrees k")
+    plt.xlabel("k")
+    plt.legend()
+    plt.show()
+
+    
+    #MLP-Regressor
+    #Testing for different values of hiddenlayers, alpha, learningrate
+    #Honestly dont really know what are realistic values
+    alphalist = [0.001, 0.01, 0.1]
+    learningratelist = [0.01, 0.1, 0.2]
+    #with learningrate 0.001 doesnt converge in 200 iterations
+    mse_train = np.ones((len(learningratelist),len(alphalist)))
+    mse_val = np.ones((len(learningratelist),len(alphalist)))
+    r2_train = np.ones((len(learningratelist),len(alphalist)))
+    r2_val = np.ones((len(learningratelist),len(alphalist)))
+    j = 0
+    for hiddenlayers in [10,100]:
+        i=0
+        for learning_rate in learningratelist:
+            j=0
+            for alpha in alphalist:
+
+                mlp_reg = MLPRegressor(hidden_layer_sizes=(hiddenlayers,), learning_rate ="constant",
+                learning_rate_init = learning_rate, alpha = alpha)
+
+                mlp_reg.fit(X_train, Y_train)
+                Y_train_pred = mlp_reg.predict(X_train)
+                Y_val_pred = mlp_reg.predict(X_val)
+
+                print(p+"MLP with "+str(hiddenlayers)+" hidden layers: stupid predictions on X_train: "+str(check_stupid_prediction(Y_train_pred)))
+                print(p+"MLP with "+str(hiddenlayers)+" hidden layers:stupid predictions on X_val: "+str(check_stupid_prediction(Y_val_pred)))
+
+                mse_train[i][j]=mean_squared_error(Y_train_pred, Y_train)
+                mse_val[i][j]=mean_squared_error(Y_val_pred, Y_val)
+                r2_train[i][j]=r2_score(Y_train_pred, Y_train)
+                r2_val[i][j]=r2_score(Y_val_pred, Y_val)
+
+                j+=1
+            i+=1
+
+        print(p +": MLP: hiddenlayers: "+ str(hiddenlayers) + ": MSE_Val: " + str(mse_val))
+        fig = plt.figure()
+        learningmesh, alphamesh = np.meshgrid(learningratelist, alphalist)
+        ax = plt.axes(projection="3d")
+        ax.plot_wireframe(learningmesh,alphamesh, mse_train, color = "red", label="mse_train")
+        ax.plot_wireframe(learningmesh, alphamesh, mse_val, color = "black", label="mse_val")
+        ax.set_title(p+": MSE: MLP using "+str(hiddenlayers)+ " hidden layers")
+        ax.set_xlabel("learningrate")
+        ax.set_ylabel("alpha")
+        plt.legend()
+        plt.show()
+
+        
+        fig = plt.figure()
+        ax = plt.axes(projection="3d")
+        ax.plot_wireframe(learningmesh,alphamesh, r2_train, color = "red", label="r2_train")
+        ax.plot_wireframe(learningmesh, alphamesh, r2_val, color = "black", label="r2_val")
+        ax.set_title(p+": r2_score: MLP using "+str(hiddenlayers)+ " hidden layers")
+        ax.set_xlabel("learningrate")
+        ax.set_ylabel("alpha")
+        plt.legend()
+        plt.show()
+
+
+
+
+    #K-nn Regressor
+    mse_train = []
+    mse_val = []
+    r2_train = []
+    r2_val = []
+
+
+    for k in klist:
+        knn = KNeighborsRegressor(n_neighbors = k, p=2)
+        knn.fit(X_train, Y_train)
+        Y_train_pred = knn.predict(X_train)
+        Y_val_pred = knn.predict(X_val)
+
+        print(p+": knn degree "+ str(k)+ ": stupid predictions on X_train: "+str(check_stupid_prediction(Y_train_pred)))
+        print(p+": knn degree "+ str(k)+ ": stupid predictions on X_val: "+str(check_stupid_prediction(Y_val_pred)))
+
+
+        mse_train.append(mean_squared_error(Y_train, Y_train_pred))
+        mse_val.append(mean_squared_error(Y_val, Y_val_pred))
+        r2_train.append(r2_score(Y_train, Y_train_pred))
+        r2_val.append(r2_score(Y_val, Y_val_pred))
+
+    print(p +": knn: MSE_Val: " + str(mse_val))
+
+    plt.figure(figsize=(10,10))
+    plt.ylim(min(min(mse_train),min(mse_val)), min(max(max(mse_train), max(mse_val)), 35000))
+    plt.plot(klist, mse_train, label="Training")
+    plt.plot(klist, mse_val, label="Validation")
+    plt.title(label= p + ": mse: knn with k neighbors")
+    plt.xlabel("k")
+    plt.legend()
+
+    plt.figure(figsize=(10,10))
+    plt.ylim(0,1)
+    plt.plot(klist, r2_train, label="Training")
+    plt.plot(klist, r2_val, label="Validation")
+    plt.title(label= p + ": r2_score: knn with k neighbors")
+    plt.xlabel("k")
+    plt.legend()
+    plt.show()
+
+#Testing 
+#Towards Sentrum
+mlp_reg = MLPRegressor(hidden_layer_sizes=(100,), learning_rate ="constant",
+                learning_rate_init = 0.01, alpha = 0.1)
+
+mlp_reg.fit(X_train, Y_train_sntr)
+Y_test_pred = mlp_reg.predict(X_test)
+
+print("sentr: MLP with "+str(100)+" hidden layers: stupid predictions on X_train: "+str(check_stupid_prediction(Y_test_pred)))
+print("Mean-squared-error is: "+ str(mean_squared_error(Y_test_pred, Y_test_sntr)))
+print("r2-score is: "+ str(r2_score(Y_test_pred, Y_test_sntr)))
+print("------")
+
+#Towards Danmarksplass
+mlp_reg = MLPRegressor(hidden_layer_sizes=(100,), learning_rate ="constant",
+                learning_rate_init = 0.01, alpha = 0.1)
+
+mlp_reg.fit(X_train, Y_train_dnp)
+Y_test_pred = mlp_reg.predict(X_test)
+
+print("dnp: MLP with "+str(100)+" hidden layers: stupid predictions on X_train: "+str(check_stupid_prediction(Y_test_pred)))
+print("Mean-squared-error is: "+ str(mean_squared_error(Y_test_pred, Y_test_dnp)))
+print("r2-score is: "+ str(r2_score(Y_test_pred, Y_test_dnp)))
+print("------")
+
+#Total amount
+mlp_reg = MLPRegressor(hidden_layer_sizes=(100,), learning_rate ="constant",
+                learning_rate_init = 0.2, alpha = 0.1)
+
+mlp_reg.fit(X_train, Y_train_total)
+Y_test_pred = mlp_reg.predict(X_test)
+
+print("sentr: MLP with "+str(100)+" hidden layers: stupid predictions on X_train: "+str(check_stupid_prediction(Y_test_pred)))
+print("Mean-squared-error is: "+str(mean_squared_error(Y_test_pred, Y_test_total)))
+print("r2-score is: "+str(r2_score(Y_test_pred, Y_test_total)))
