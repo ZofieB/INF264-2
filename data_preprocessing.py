@@ -40,8 +40,8 @@ for datapoint in X_raw:
     datetime_point = datetime.datetime(datapoint[0], datapoint[1], datapoint[2], hour = datapoint[3])
     new_datapoint = [datetime_point, datapoint[4], datapoint[5], datapoint[6]]
     dates.append(new_datapoint)
-    day_indeX_raw = datetime_point.weekday()
-    weekdays[day_indeX_raw].append(new_datapoint)
+    day_index = datetime_point.weekday()
+    weekdays[day_index].append(new_datapoint)
     months[datetime_point.month - 1].append(new_datapoint)
 
 #plot every weekday seperately
@@ -104,14 +104,14 @@ for month in range(len(months)):
 plt.suptitle("Volume in both directions for each month")
 plt.show()
 
-#creating the feature matriX_raw:
+#creating the feature matrix:
 #0 weekday 1 saturday 2 sunday/free day 3 hours continuous feature
 fe_datapoints = []
 Y_dnp_list = []
 Y_sntr_list = []
 Y_totalt_list = []
 for datapoint in dates:
-    day_indeX_raw = datapoint[0].weekday()
+    day_index = datapoint[0].weekday()
     # Christmas
     if datapoint[0].month == 12 and (datapoint[0].day == 25 or datapoint[0].day == 26):
         fe_datapoints.append([0,0,1,datapoint[0].hour])
@@ -155,10 +155,10 @@ for datapoint in dates:
     elif datapoint[0].year == 2019 and datapoint[0].month == 6 and datapoint[0].day == 10:
         fe_datapoints.append([0,0,1,datapoint[0].hour])
     #saturdays
-    elif day_indeX_raw == 5:
+    elif day_index == 5:
         fe_datapoints.append([0,1,0,datapoint[0].hour])
     #sundays
-    elif day_indeX_raw == 6:
+    elif day_index == 6:
         fe_datapoints.append([0,0,1,datapoint[0].hour])
     #normal weekdays
     else:
