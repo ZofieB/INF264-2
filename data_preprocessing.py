@@ -193,9 +193,9 @@ Y_dnp = np.array(Y_dnp_list)
 Y_totalt = np.array(Y_totalt_list)
 
 #Split Data
-seed = 221
+seed = 119
 X_train, X_val_test, Y_train_sntr, Y_val_test_sntr, Y_train_dnp, Y_val_test_dnp, Y_train_total, Y_val_test_total = model_selection.train_test_split(X, Y_sntr, Y_dnp, Y_totalt, test_size= 0.2, shuffle=True, random_state = seed)
-seed = 768
+seed = 632
 X_val, X_test, Y_val_sntr, Y_test_sntr, Y_val_dnp, Y_test_dnp, Y_val_total, Y_test_total = model_selection.train_test_split(X_val_test, Y_val_test_sntr, Y_val_test_dnp, Y_val_test_total, test_size= 0.5, shuffle=True,
 random_state = seed)
 #Ratio = 0.8 , 0.1 , 0.1
@@ -366,3 +366,39 @@ for p in different_predictions:
     plt.xlabel("k")
     plt.legend()
     plt.show()
+
+#Testing 
+#Towards Sentrum
+mlp_reg = MLPRegressor(hidden_layer_sizes=(100,), learning_rate ="constant",
+                learning_rate_init = 0.01, alpha = 0.1)
+
+mlp_reg.fit(X_train, Y_train_sntr)
+Y_test_pred = mlp_reg.predict(X_test)
+
+print("sentr: MLP with "+str(100)+" hidden layers: stupid predictions on X_train: "+str(check_stupid_prediction(Y_test_pred)))
+print("Mean-squared-error is: "+ str(mean_squared_error(Y_test_pred, Y_test_sntr)))
+print("r2-score is: "+ str(r2_score(Y_test_pred, Y_test_sntr)))
+print("------")
+
+#Towards Danmarksplass
+mlp_reg = MLPRegressor(hidden_layer_sizes=(100,), learning_rate ="constant",
+                learning_rate_init = 0.01, alpha = 0.1)
+
+mlp_reg.fit(X_train, Y_train_dnp)
+Y_test_pred = mlp_reg.predict(X_test)
+
+print("dnp: MLP with "+str(100)+" hidden layers: stupid predictions on X_train: "+str(check_stupid_prediction(Y_test_pred)))
+print("Mean-squared-error is: "+ str(mean_squared_error(Y_test_pred, Y_test_dnp)))
+print("r2-score is: "+ str(r2_score(Y_test_pred, Y_test_dnp)))
+print("------")
+
+#Total amount
+mlp_reg = MLPRegressor(hidden_layer_sizes=(100,), learning_rate ="constant",
+                learning_rate_init = 0.2, alpha = 0.1)
+
+mlp_reg.fit(X_train, Y_train_total)
+Y_test_pred = mlp_reg.predict(X_test)
+
+print("sentr: MLP with "+str(100)+" hidden layers: stupid predictions on X_train: "+str(check_stupid_prediction(Y_test_pred)))
+print("Mean-squared-error is: "+str(mean_squared_error(Y_test_pred, Y_test_total)))
+print("r2-score is: "+str(r2_score(Y_test_pred, Y_test_total)))
